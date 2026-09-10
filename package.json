@@ -29,6 +29,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
+    "postinstall": "prisma generate",
     "prepare": "husky"
   },
   "keywords": [
