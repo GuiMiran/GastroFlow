@@ -1,0 +1,765 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id               String            @id @default(uuid())
+  nombre           String
+  nif              String            @unique
+  email            String
+  activo           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  establecimientos Establecimiento[]
+
+  @@map("tenants")
+}
+
+model Establecimiento {
+  id                   String                @id @default(uuid())
+  tenantId             String
+  nombre               String
+  nif                  String
+  direccion            String
+  codigoPostal         String
+  ciudad               String
+  provincia            String
+  telefono             String?
+  regimenFiscal        String                @default("general")
+  activo               Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  almacenes            Almacen[]
+  asientosContables    AsientoContable[]
+  cajas                Caja[]
+  clientes             Cliente[]
+  ejerciciosFiscales   EjercicioFiscal[]
+  empleados            Empleado[]
+  tenant               Tenant                @relation(fields: [tenantId], references: [id])
+  licenciasModulo      LicenciaModulo[]
+  productos            Producto[]
+  programaFidelizacion ProgramaFidelizacion?
+  proveedores          Proveedor[]
+  seriesFacturacion    SerieFacturacion[]
+  zonas                Zona[]
+
+  @@index([tenantId])
+  @@map("establecimientos")
+}
+
+model Zona {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  activa            Boolean         @default(true)
+  mesas             Mesa[]
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+
+  @@index([establecimientoId])
+  @@map("zonas")
+}
+
+model Mesa {
+  id        String     @id @default(uuid())
+  zonaId    String
+  numero    Int
+  capacidad Int        @default(4)
+  estado    EstadoMesa @default(libre)
+  activa    Boolean    @default(true)
+  zona      Zona       @relation(fields: [zonaId], references: [id])
+  reservas  Reserva[]
+  servicios Servicio[]
+
+  @@unique([zonaId, numero])
+  @@map("mesas")
+}
+
+model Servicio {
+  id           String    @id @default(uuid())
+  mesaId       String?
+  camareroId   String
+  comensales   Int       @default(1)
+  abierto      Boolean   @default(true)
+  horaApertura DateTime  @default(now())
+  horaCierre   DateTime?
+  comandas     Comanda[]
+  camarero     Empleado  @relation(fields: [camareroId], references: [id])
+  mesa         Mesa?     @relation(fields: [mesaId], references: [id])
+  tickets      Ticket[]
+
+  @@index([mesaId, abierto])
+  @@map("servicios")
+}
+
+model Comanda {
+  id         String         @id @default(uuid())
+  servicioId String
+  numero     Int
+  estado     EstadoComanda  @default(enviada)
+  destino    String?
+  createdAt  DateTime       @default(now())
+  servicio   Servicio       @relation(fields: [servicioId], references: [id])
+  lineas     LineaComanda[]
+
+  @@index([servicioId])
+  @@map("comandas")
+}
+
+model LineaComanda {
+  id              String        @id @default(uuid())
+  comandaId       String
+  productoId      String
+  cantidad        Int           @default(1)
+  precioUnitario  Decimal       @db.Decimal(10, 2)
+  tipoIva         Decimal       @db.Decimal(4, 2)
+  baseImponible   Decimal       @db.Decimal(10, 2)
+  cuotaIva        Decimal       @db.Decimal(10, 2)
+  descuento       Decimal       @default(0) @db.Decimal(10, 2)
+  anulada         Boolean       @default(false)
+  motivoAnulacion String?
+  ticketId        String?
+  comanda         Comanda       @relation(fields: [comandaId], references: [id])
+  producto        Producto      @relation(fields: [productoId], references: [id])
+  ticket          Ticket?       @relation(fields: [ticketId], references: [id])
+  modificadores   Modificador[]
+
+  @@index([comandaId])
+  @@map("lineas_comanda")
+}
+
+model Modificador {
+  id             String       @id @default(uuid())
+  lineaComandaId String
+  texto          String
+  precioExtra    Decimal      @default(0) @db.Decimal(10, 2)
+  lineaComanda   LineaComanda @relation(fields: [lineaComandaId], references: [id])
+
+  @@map("modificadores")
+}
+
+model SerieFacturacion {
+  id                String              @id @default(uuid())
+  establecimientoId String
+  prefijo           String
+  tipo              TipoDocumentoFiscal
+  ultimoNumero      Int                 @default(0)
+  year              Int
+  establecimiento   Establecimiento     @relation(fields: [establecimientoId], references: [id])
+  tickets           Ticket[]
+
+  @@unique([establecimientoId, prefijo, year])
+  @@map("series_facturacion")
+}
+
+model Ticket {
+  id                    String                @id @default(uuid())
+  servicioId            String
+  serieFacturacionId    String
+  tipo                  TipoDocumentoFiscal
+  numeroSecuencial      Int
+  codigoCompleto        String                @unique
+  baseImponible4        Decimal               @default(0) @db.Decimal(10, 2)
+  cuotaIva4             Decimal               @default(0) @db.Decimal(10, 2)
+  baseImponible10       Decimal               @default(0) @db.Decimal(10, 2)
+  cuotaIva10            Decimal               @default(0) @db.Decimal(10, 2)
+  baseImponible21       Decimal               @default(0) @db.Decimal(10, 2)
+  cuotaIva21            Decimal               @default(0) @db.Decimal(10, 2)
+  totalSinIva           Decimal               @db.Decimal(10, 2)
+  totalIva              Decimal               @db.Decimal(10, 2)
+  total                 Decimal               @db.Decimal(10, 2)
+  destinatarioNif       String?
+  destinatarioNombre    String?
+  destinatarioDireccion String?
+  ticketOriginalId      String?
+  motivoRectificacion   String?
+  tipoRectificacion     String?
+  asientoContableId     String?               @unique
+  clienteId             String?
+  fechaEmision          DateTime              @default(now())
+  createdAt             DateTime              @default(now())
+  cobros                Cobro[]
+  libroRegistroEmitida  LibroRegistroEmitida?
+  lineas                LineaComanda[]
+  registroVeriFactu     RegistroVeriFactu?
+  asientoContable       AsientoContable?      @relation(fields: [asientoContableId], references: [id])
+  cliente               Cliente?              @relation(fields: [clienteId], references: [id])
+  serieFacturacion      SerieFacturacion      @relation(fields: [serieFacturacionId], references: [id])
+  servicio              Servicio              @relation(fields: [servicioId], references: [id])
+  ticketOriginal        Ticket?               @relation("Rectificativas", fields: [ticketOriginalId], references: [id])
+  rectificativas        Ticket[]              @relation("Rectificativas")
+
+  @@unique([serieFacturacionId, numeroSecuencial])
+  @@index([servicioId])
+  @@map("tickets")
+}
+
+model RegistroVeriFactu {
+  id            String   @id @default(uuid())
+  ticketId      String   @unique
+  hashActual    String
+  hashAnterior  String
+  datosRegistro String
+  createdAt     DateTime @default(now())
+  ticket        Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@map("registros_verifactu")
+}
+
+model Cobro {
+  id        String    @id @default(uuid())
+  ticketId  String
+  formaPago FormaPago
+  importe   Decimal   @db.Decimal(10, 2)
+  cambio    Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt DateTime  @default(now())
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+
+  @@map("cobros")
+}
+
+model Caja {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  activa            Boolean         @default(true)
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+  turnos            TurnoCaja[]
+
+  @@map("cajas")
+}
+
+model TurnoCaja {
+  id               String           @id @default(uuid())
+  cajaId           String
+  cajeroId         String
+  fondoCaja        Decimal          @db.Decimal(10, 2)
+  abierto          Boolean          @default(true)
+  horaApertura     DateTime         @default(now())
+  horaCierre       DateTime?
+  efectivoEsperado Decimal?         @db.Decimal(10, 2)
+  efectivoReal     Decimal?         @db.Decimal(10, 2)
+  descuadre        Decimal?         @db.Decimal(10, 2)
+  movimientos      MovimientoCaja[]
+  caja             Caja             @relation(fields: [cajaId], references: [id])
+  cajero           Empleado         @relation(fields: [cajeroId], references: [id])
+
+  @@index([cajaId, abierto])
+  @@map("turnos_caja")
+}
+
+model MovimientoCaja {
+  id          String    @id @default(uuid())
+  turnoCajaId String
+  tipo        String
+  importe     Decimal   @db.Decimal(10, 2)
+  concepto    String?
+  createdAt   DateTime  @default(now())
+  turnoCaja   TurnoCaja @relation(fields: [turnoCajaId], references: [id])
+
+  @@map("movimientos_caja")
+}
+
+model CategoriaProducto {
+  id        String     @id @default(uuid())
+  nombre    String
+  destino   String?
+  orden     Int        @default(0)
+  activa    Boolean    @default(true)
+  productos Producto[]
+
+  @@map("categorias_producto")
+}
+
+model Producto {
+  id                String             @id @default(uuid())
+  establecimientoId String
+  categoriaId       String
+  nombre            String
+  descripcion       String?
+  precioConIva      Decimal            @db.Decimal(10, 2)
+  tipoIva           TipoIVA
+  activo            Boolean            @default(true)
+  escandallo        Escandallo?
+  lineasComanda     LineaComanda[]
+  alergenos         ProductoAlergeno[]
+  categoria         CategoriaProducto  @relation(fields: [categoriaId], references: [id])
+  establecimiento   Establecimiento    @relation(fields: [establecimientoId], references: [id])
+
+  @@index([establecimientoId, categoriaId])
+  @@map("productos")
+}
+
+model Alergeno {
+  id        String             @id @default(uuid())
+  nombre    String             @unique
+  icono     String?
+  productos ProductoAlergeno[]
+
+  @@map("alergenos")
+}
+
+model ProductoAlergeno {
+  productoId String
+  alergenoId String
+  alergeno   Alergeno @relation(fields: [alergenoId], references: [id])
+  producto   Producto @relation(fields: [productoId], references: [id])
+
+  @@id([productoId, alergenoId])
+  @@map("producto_alergenos")
+}
+
+model Escandallo {
+  id           String                  @id @default(uuid())
+  productoId   String                  @unique
+  costeTeorico Decimal                 @db.Decimal(10, 4)
+  foodCost     Decimal                 @db.Decimal(5, 2)
+  updatedAt    DateTime                @updatedAt
+  ingredientes EscandalloIngrediente[]
+  producto     Producto                @relation(fields: [productoId], references: [id])
+
+  @@map("escandallos")
+}
+
+model EscandalloIngrediente {
+  id            String      @id @default(uuid())
+  escandalloId  String
+  ingredienteId String
+  cantidadNeta  Decimal     @db.Decimal(10, 4)
+  merma         Decimal     @default(0) @db.Decimal(5, 2)
+  escandallo    Escandallo  @relation(fields: [escandalloId], references: [id])
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
+
+  @@map("escandallo_ingredientes")
+}
+
+model Ingrediente {
+  id           String                  @id @default(uuid())
+  nombre       String
+  unidadMedida String
+  precioCoste  Decimal                 @db.Decimal(10, 4)
+  stockMinimo  Decimal                 @default(0) @db.Decimal(10, 4)
+  activo       Boolean                 @default(true)
+  escandallos  EscandalloIngrediente[]
+  movimientos  MovimientoStock[]
+  stocks       Stock[]
+
+  @@map("ingredientes")
+}
+
+model Almacen {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  activo            Boolean         @default(true)
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+  stocks            Stock[]
+
+  @@map("almacenes")
+}
+
+model Stock {
+  id            String      @id @default(uuid())
+  ingredienteId String
+  almacenId     String
+  cantidad      Decimal     @db.Decimal(10, 4)
+  almacen       Almacen     @relation(fields: [almacenId], references: [id])
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
+
+  @@unique([ingredienteId, almacenId])
+  @@map("stocks")
+}
+
+model MovimientoStock {
+  id              String              @id @default(uuid())
+  ingredienteId   String
+  tipo            TipoMovimientoStock
+  cantidad        Decimal             @db.Decimal(10, 4)
+  origenDocumento String
+  createdAt       DateTime            @default(now())
+  ingrediente     Ingrediente         @relation(fields: [ingredienteId], references: [id])
+
+  @@index([ingredienteId, createdAt])
+  @@map("movimientos_stock")
+}
+
+model Proveedor {
+  id                String            @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  nif               String
+  direccion         String?
+  telefono          String?
+  email             String?
+  activo            Boolean           @default(true)
+  albaranes         AlbaranEntrada[]
+  facturasCompra    FacturaCompra[]
+  pedidos           PedidoProveedor[]
+  establecimiento   Establecimiento   @relation(fields: [establecimientoId], references: [id])
+
+  @@index([establecimientoId])
+  @@map("proveedores")
+}
+
+model PedidoProveedor {
+  id           String           @id @default(uuid())
+  proveedorId  String
+  estado       EstadoPedido     @default(pendiente)
+  fechaPedido  DateTime         @default(now())
+  fechaEntrega DateTime?
+  albaranes    AlbaranEntrada[]
+  lineas       LineaPedido[]
+  proveedor    Proveedor        @relation(fields: [proveedorId], references: [id])
+
+  @@map("pedidos_proveedor")
+}
+
+model LineaPedido {
+  id             String          @id @default(uuid())
+  pedidoId       String
+  ingredienteId  String
+  descripcion    String
+  cantidadPedida Decimal         @db.Decimal(10, 4)
+  unidadMedida   String
+  precioEstimado Decimal?        @db.Decimal(10, 4)
+  pedido         PedidoProveedor @relation(fields: [pedidoId], references: [id])
+
+  @@map("lineas_pedido")
+}
+
+model AlbaranEntrada {
+  id             String           @id @default(uuid())
+  proveedorId    String
+  pedidoId       String?
+  numeroAlbaran  String
+  fechaRecepcion DateTime         @default(now())
+  pedido         PedidoProveedor? @relation(fields: [pedidoId], references: [id])
+  proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
+  lineas         LineaAlbaran[]
+
+  @@map("albaranes_entrada")
+}
+
+model LineaAlbaran {
+  id               String         @id @default(uuid())
+  albaranId        String
+  ingredienteId    String
+  cantidadRecibida Decimal        @db.Decimal(10, 4)
+  cantidadEsperada Decimal?       @db.Decimal(10, 4)
+  diferencia       Decimal?       @db.Decimal(10, 4)
+  albaran          AlbaranEntrada @relation(fields: [albaranId], references: [id])
+
+  @@map("lineas_albaran")
+}
+
+model FacturaCompra {
+  id                    String                 @id @default(uuid())
+  proveedorId           String
+  numeroFactura         String
+  fechaFactura          DateTime
+  fechaRegistro         DateTime               @default(now())
+  baseImponible4        Decimal                @default(0) @db.Decimal(10, 2)
+  cuotaIva4             Decimal                @default(0) @db.Decimal(10, 2)
+  baseImponible10       Decimal                @default(0) @db.Decimal(10, 2)
+  cuotaIva10            Decimal                @default(0) @db.Decimal(10, 2)
+  baseImponible21       Decimal                @default(0) @db.Decimal(10, 2)
+  cuotaIva21            Decimal                @default(0) @db.Decimal(10, 2)
+  totalSinIva           Decimal                @db.Decimal(10, 2)
+  totalIva              Decimal                @db.Decimal(10, 2)
+  total                 Decimal                @db.Decimal(10, 2)
+  asientoContableId     String?                @unique
+  asientoContable       AsientoContable?       @relation(fields: [asientoContableId], references: [id])
+  proveedor             Proveedor              @relation(fields: [proveedorId], references: [id])
+  libroRegistroRecibida LibroRegistroRecibida?
+
+  @@unique([proveedorId, numeroFactura])
+  @@map("facturas_compra")
+}
+
+model EjercicioFiscal {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  year              Int
+  cerrado           Boolean         @default(false)
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+
+  @@unique([establecimientoId, year])
+  @@map("ejercicios_fiscales")
+}
+
+model AsientoContable {
+  id                String           @id @default(uuid())
+  establecimientoId String
+  numero            Int
+  fecha             DateTime
+  concepto          String
+  origen            String
+  createdAt         DateTime         @default(now())
+  apuntes           ApunteContable[]
+  establecimiento   Establecimiento  @relation(fields: [establecimientoId], references: [id])
+  facturaCompra     FacturaCompra?
+  ticket            Ticket?
+
+  @@index([establecimientoId, fecha])
+  @@map("asientos_contables")
+}
+
+model ApunteContable {
+  id        String          @id @default(uuid())
+  asientoId String
+  cuentaPgc String
+  concepto  String?
+  cargo     Decimal         @default(0) @db.Decimal(10, 2)
+  abono     Decimal         @default(0) @db.Decimal(10, 2)
+  asiento   AsientoContable @relation(fields: [asientoId], references: [id])
+
+  @@map("apuntes_contables")
+}
+
+model LibroRegistroEmitida {
+  id              String   @id @default(uuid())
+  ticketId        String   @unique
+  fechaExpedicion DateTime
+  baseImponible   Decimal  @db.Decimal(10, 2)
+  cuotaIva        Decimal  @db.Decimal(10, 2)
+  total           Decimal  @db.Decimal(10, 2)
+  tipoDocumento   String
+  createdAt       DateTime @default(now())
+  ticket          Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@map("libro_registro_emitidas")
+}
+
+model LibroRegistroRecibida {
+  id              String        @id @default(uuid())
+  facturaCompraId String        @unique
+  fechaRecepcion  DateTime
+  proveedorNif    String
+  baseImponible   Decimal       @db.Decimal(10, 2)
+  cuotaIva        Decimal       @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+  facturaCompra   FacturaCompra @relation(fields: [facturaCompraId], references: [id])
+
+  @@map("libro_registro_recibidas")
+}
+
+model LicenciaModulo {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  modulo            String
+  activo            Boolean         @default(true)
+  activadoEn        DateTime        @default(now())
+  desactivadoEn     DateTime?
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+
+  @@unique([establecimientoId, modulo])
+  @@index([establecimientoId])
+  @@map("licencias_modulo")
+}
+
+model AuditLog {
+  id                String   @id @default(uuid())
+  establecimientoId String?
+  empleadoId        String?
+  accion            String
+  entidad           String?
+  entidadId         String?
+  detalle           Json?
+  ip                String?
+  createdAt         DateTime @default(now())
+
+  @@index([establecimientoId, createdAt])
+  @@index([empleadoId])
+  @@map("audit_log")
+}
+
+model Empleado {
+  id                String          @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  apellidos         String
+  nif               String
+  email             String?
+  telefono          String?
+  puesto            String
+  activo            Boolean         @default(true)
+  fechaAlta         DateTime        @default(now())
+  fechaBaja         DateTime?
+  emailLogin        String?         @unique
+  passwordHash      String?
+  pinHash           String?
+  rol               RolEmpleado     @default(CAMARERO)
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+  fichajes          Fichaje[]
+  servicios         Servicio[]
+  turnos            Turno[]
+  turnosCaja        TurnoCaja[]
+
+  @@index([establecimientoId])
+  @@index([emailLogin])
+  @@map("empleados")
+}
+
+model Turno {
+  id         String   @id @default(uuid())
+  empleadoId String
+  fecha      DateTime @db.Date
+  horaInicio DateTime
+  horaFin    DateTime
+  empleado   Empleado @relation(fields: [empleadoId], references: [id])
+
+  @@index([empleadoId, fecha])
+  @@map("turnos")
+}
+
+model Fichaje {
+  id         String   @id @default(uuid())
+  empleadoId String
+  tipo       String
+  hora       DateTime @default(now())
+  empleado   Empleado @relation(fields: [empleadoId], references: [id])
+
+  @@index([empleadoId, hora])
+  @@map("fichajes")
+}
+
+model Cliente {
+  id                String           @id @default(uuid())
+  establecimientoId String
+  nombre            String
+  apellidos         String?
+  email             String?
+  telefono          String?
+  fechaNacimiento   DateTime?        @db.Date
+  puntos            Int              @default(0)
+  nivel             String           @default("bronce")
+  activo            Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  establecimiento   Establecimiento  @relation(fields: [establecimientoId], references: [id])
+  consentimientos   Consentimiento[]
+  reservas          Reserva[]
+  tickets           Ticket[]
+
+  @@index([establecimientoId, email])
+  @@map("clientes")
+}
+
+model Consentimiento {
+  id          String   @id @default(uuid())
+  clienteId   String
+  tipo        String
+  otorgado    Boolean  @default(false)
+  fechaAccion DateTime @default(now())
+  ip          String?
+  cliente     Cliente  @relation(fields: [clienteId], references: [id])
+
+  @@index([clienteId, tipo])
+  @@map("consentimientos")
+}
+
+model ProgramaFidelizacion {
+  id                String          @id @default(uuid())
+  establecimientoId String          @unique
+  puntosPorEuro     Int             @default(1)
+  umbralPlata       Int             @default(500)
+  umbralOro         Int             @default(1500)
+  revisionAnual     Boolean         @default(false)
+  activo            Boolean         @default(true)
+  establecimiento   Establecimiento @relation(fields: [establecimientoId], references: [id])
+
+  @@map("programas_fidelizacion")
+}
+
+model Reserva {
+  id               String        @id @default(uuid())
+  clienteId        String?
+  mesaId           String?
+  nombreContacto   String
+  telefonoContacto String?
+  emailContacto    String?
+  fecha            DateTime      @db.Date
+  hora             DateTime      @db.Time(6)
+  comensales       Int
+  estado           EstadoReserva @default(confirmada)
+  notas            String?
+  createdAt        DateTime      @default(now())
+  cliente          Cliente?      @relation(fields: [clienteId], references: [id])
+  mesa             Mesa?         @relation(fields: [mesaId], references: [id])
+
+  @@index([fecha, estado])
+  @@map("reservas")
+}
+
+enum EstadoMesa {
+  libre
+  ocupada
+  reservada
+  pendiente_cobro
+}
+
+enum EstadoComanda {
+  enviada
+  en_preparacion
+  lista
+  servida
+  anulada
+}
+
+enum TipoDocumentoFiscal {
+  ticket
+  factura_completa
+  rectificativa
+}
+
+enum FormaPago {
+  efectivo
+  tarjeta
+  bizum
+  invitacion
+}
+
+enum TipoIVA {
+  general_21
+  reducido_10
+  superreducido_4
+  exento_0
+}
+
+enum TipoMovimientoStock {
+  entrada_compra
+  salida_venta
+  ajuste_inventario
+  traspaso_entrada
+  traspaso_salida
+  merma
+}
+
+enum EstadoPedido {
+  pendiente
+  enviado
+  recibido_parcial
+  recibido
+  cancelado
+}
+
+enum RolEmpleado {
+  ADMIN
+  GERENTE
+  CAJERO
+  CAMARERO
+  COCINERO
+  BARRA
+  CONTABLE
+}
+
+enum EstadoReserva {
+  confirmada
+  cancelada
+  cumplida
+  noshow
+}

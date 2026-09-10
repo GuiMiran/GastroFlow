@@ -1,0 +1,51 @@
+services:
+  # ─── Base de datos ────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: gastroflow-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: gastroflow
+      POSTGRES_PASSWORD: gastroflow
+      POSTGRES_DB: gastroflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gastroflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend NestJS ───────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gastroflow-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://gastroflow:gastroflow@postgres:5432/gastroflow?schema=public
+      NODE_ENV: production
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Frontend React + nginx ───────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gastroflow-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
