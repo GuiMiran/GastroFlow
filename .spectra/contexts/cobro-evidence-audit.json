@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "path": ".spectra/evidence.json",
+      "content": "AC-001 y AC-002 constan como passed para el comando Jest focalizado; el registro no acredita cumplimiento juridico ni fiscal."
+    },
+    {
+      "path": "test/cobro.service.spec.ts",
+      "content": "La suite contiene diez pruebas unitarias con mocks. Incluye rechazo de pago insuficiente, total y cambio, numeracion, hash, liberacion de mesa y evento de ticket."
+    }
+  ],
+  "specifications": [
+    {
+      "id": "AC-001",
+      "content": "Un cobro suficiente crea el resultado esperado, calcula el cambio, registra VeriFactu, cierra el servicio, libera la mesa y publica el evento."
+    },
+    {
+      "id": "AC-002",
+      "content": "Un pago insuficiente se rechaza sin completar el ticket ni cerrar el servicio."
+    }
+  ]
+}

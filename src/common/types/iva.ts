@@ -53,6 +53,8 @@ export function decimalToNumber(d: Decimal | number): number {
  * RN-003: desglosar cada base y cuota por tipo
  */
 export interface DesgloseIva {
+  base0: number;
+  iva0: number;
   base4: number;
   iva4: number;
   base10: number;
@@ -76,6 +78,7 @@ export interface LineaParaDesglose {
  */
 export function calcularDesgloseIva(lineas: LineaParaDesglose[]): DesgloseIva {
   const desglose: DesgloseIva = {
+    base0: 0, iva0: 0,
     base4: 0, iva4: 0,
     base10: 0, iva10: 0,
     base21: 0, iva21: 0,
@@ -89,7 +92,10 @@ export function calcularDesgloseIva(lineas: LineaParaDesglose[]): DesgloseIva {
     const base = calcularBaseImponible(importeNeto, linea.tipoIva);
     const cuota = calcularCuotaIva(base, linea.tipoIva, importeNeto);
 
-    if (linea.tipoIva === TIPOS_IVA.SUPERREDUCIDO_4) {
+    if (linea.tipoIva === TIPOS_IVA.EXENTO_0) {
+      desglose.base0 = round2(desglose.base0 + base);
+      desglose.iva0 = round2(desglose.iva0 + cuota);
+    } else if (linea.tipoIva === TIPOS_IVA.SUPERREDUCIDO_4) {
       desglose.base4 = round2(desglose.base4 + base);
       desglose.iva4 = round2(desglose.iva4 + cuota);
     } else if (linea.tipoIva === TIPOS_IVA.REDUCIDO_10) {
@@ -101,8 +107,8 @@ export function calcularDesgloseIva(lineas: LineaParaDesglose[]): DesgloseIva {
     }
   }
 
-  desglose.totalSinIva = round2(desglose.base4 + desglose.base10 + desglose.base21);
-  desglose.totalIva = round2(desglose.iva4 + desglose.iva10 + desglose.iva21);
+  desglose.totalSinIva = round2(desglose.base0 + desglose.base4 + desglose.base10 + desglose.base21);
+  desglose.totalIva = round2(desglose.iva0 + desglose.iva4 + desglose.iva10 + desglose.iva21);
   desglose.total = round2(desglose.totalSinIva + desglose.totalIva);
 
   return desglose;

@@ -18,6 +18,19 @@ import { round2, decimalToNumber } from '../../../common/types/iva';
  * OP-033: EmitirFacturaRectificativa
  *
  * WF-001 pasos 5→6: cobro → ticket VeriFactu
+ *
+ * SPECTRA current-format pilot:
+ * @spectra US-001
+ * @spectra BR-001
+ * @spectra BR-002
+ * @spectra INV-001
+ * @spectra INV-002
+ * @spectra OP-001
+ * @spectra POL-001
+ * @spectra EVT-001
+ * @spectra AG-001
+ * @spectra SK-001
+ * @spectra WF-001
  */
 @Injectable()
 export class CobroService {

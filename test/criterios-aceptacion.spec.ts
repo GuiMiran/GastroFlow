@@ -286,3 +286,19 @@ describe('RN-038: Descuento se aplica antes del cálculo de IVA', () => {
     expect(round2(base + cuota)).toBe(9.0);
   });
 });
+
+// ──────────────────────────────────────
+// Exento 0%: sin IVA, pero con total correcto
+// ──────────────────────────────────────
+describe('EXENTO_0: productos sin IVA', () => {
+  it('mantiene el importe Neto sin cargar IVA', () => {
+    const desglose = calcularDesgloseIva([
+      { precioUnitario: 10.0, cantidad: 1, tipoIva: TIPOS_IVA.EXENTO_0, descuento: 0 },
+    ]);
+
+    expect(desglose.base0).toBe(10.0);
+    expect(desglose.iva0).toBe(0);
+    expect(desglose.totalSinIva).toBe(10.0);
+    expect(desglose.total).toBe(10.0);
+  });
+});

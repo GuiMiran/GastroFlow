@@ -6,3 +6,4 @@ coverage/
 coverage-integration/
 frontend/dist/
 .vs/
+.spectra/agent-runs/

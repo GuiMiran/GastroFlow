@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "cobro-evidence-audit",
+  "objective": "Revisar si el piloto de cobro tiene evidencia ejecutada suficiente para AC-001 y AC-002 y proponer el siguiente paso minimo sin modificar el sistema.",
+  "successCriteria": [
+    {
+      "id": "AC-001",
+      "description": "El plan identifica la evidencia del cobro correcto y exige revision humana para cualquier conclusion fiscal."
+    },
+    {
+      "id": "AC-002",
+      "description": "El plan identifica la evidencia del rechazo de pago insuficiente sin proponer cambios automaticos."
+    }
+  ],
+  "constraints": [
+    "Planificacion de solo lectura.",
+    "No modificar codigo, especificaciones, tests, datos ni configuracion.",
+    "No afirmar cumplimiento legal o fiscal a partir de tests unitarios.",
+    "Toda accion posterior requiere aprobacion humana."
+  ],
+  "scope": {
+    "allowedFiles": [
+      ".spectra/evidence.json",
+      "test/cobro.service.spec.ts"
+    ],
+    "allowedSpecIds": [
+      "AC-001",
+      "AC-002"
+    ]
+  }
+}

@@ -5,6 +5,13 @@
 >
 > **Demo de uso e implementación del catálogo Spec Driven Development (SDD) de [Spectra](https://github.com/GuiMiran/spectra).**
 
+La integración piloto con el formato actual de SPECTRA está documentada en
+[`docs/SPECTRA-DEMO.md`](docs/SPECTRA-DEMO.md). La referencia técnica de cada
+comando está en [`docs/SPECTRA-CLI.md`](docs/SPECTRA-CLI.md). Se puede ejecutar
+el piloto con `npm run spectra:demo`.
+La primera base de evidencia y planificacion de solo lectura esta en
+[`docs/SPECTRA-AUTONOMY-PILOT.md`](docs/SPECTRA-AUTONOMY-PILOT.md).
+
 ---
 
 ## Tabla de Contenidos

@@ -5,6 +5,10 @@
  *   SK-005 (cobrarServicio) — OP-004, INV-001, INV-008, INV-014, EVT-004
  *   RN-033 (total > 0), RN-037 (cambio)
  *   INV-010 (mesa→libre tras cobro)
+ *
+ * SPECTRA current-format evidence:
+ * @spectra AC-001
+ * @spectra AC-002
  */
 import { BadRequestException } from '@nestjs/common';
 import { CobroService } from '../src/modules/tpv/services/cobro.service';

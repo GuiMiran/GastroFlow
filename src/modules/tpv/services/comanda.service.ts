@@ -189,6 +189,7 @@ export class ComandaService {
       include: { producto: true },
     });
 
+    let base0 = 0, iva0 = 0;
     let base4 = 0, iva4 = 0;
     let base10 = 0, iva10 = 0;
     let base21 = 0, iva21 = 0;
@@ -198,7 +199,9 @@ export class ComandaService {
       const cuota = decimalToNumber(linea.cuotaIva);
       const tipoIva = decimalToNumber(linea.tipoIva);
 
-      if (tipoIva === TIPOS_IVA.SUPERREDUCIDO_4) {
+      if (tipoIva === TIPOS_IVA.EXENTO_0) {
+        base0 += base; iva0 += cuota;
+      } else if (tipoIva === TIPOS_IVA.SUPERREDUCIDO_4) {
         base4 += base; iva4 += cuota;
       } else if (tipoIva === TIPOS_IVA.REDUCIDO_10) {
         base10 += base; iva10 += cuota;
@@ -208,8 +211,8 @@ export class ComandaService {
     }
 
     const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-    const totalSinIva = round2(base4 + base10 + base21);
-    const totalIva = round2(iva4 + iva10 + iva21);
+    const totalSinIva = round2(base0 + base4 + base10 + base21);
+    const totalIva = round2(iva0 + iva4 + iva10 + iva21);
     const total = round2(totalSinIva + totalIva);
 
     // INV-002: total = Σ(base + cuota)
@@ -223,6 +226,7 @@ export class ComandaService {
         subtotal: round2(decimalToNumber(l.baseImponible) + decimalToNumber(l.cuotaIva)),
       })),
       desglose: {
+        base0: round2(base0), iva0: round2(iva0),
         base4: round2(base4), iva4: round2(iva4),
         base10: round2(base10), iva10: round2(iva10),
         base21: round2(base21), iva21: round2(iva21),
