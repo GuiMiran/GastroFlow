@@ -114,8 +114,11 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
 
+      - name: Seed integration database
+        run: npm run seed
+
       - name: Run integration tests
-        run: npm run test:integration
+        run: npm run test:integration -- --runInBand
 
   # ════════════════════════════════════════════
   # Stage 4: Build
