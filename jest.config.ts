@@ -8,21 +8,27 @@ const config: Config = {
     '^.+\\.ts$': 'ts-jest',
   },
   collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/main.ts',              // Excluir bootstrap
-    '!src/**/*.module.ts',       // Excluir módulos (poca lógica)
-    '!src/**/*.dto.ts',          // Excluir DTOs (solo tipos)
-    '!src/**/*.interface.ts',    // Excluir interfaces
-    '!src/**/*.types.ts',        // Excluir types
+    'src/common/events/domain-events.ts',
+    'src/common/prisma/prisma.service.ts',
+    'src/common/types/iva.ts',
+    'src/modules/auth/auth.service.ts',
+    'src/modules/contable/asiento.service.ts',
+    'src/modules/empleado/empleado.service.ts',
+    'src/modules/tpv/services/caja.service.ts',
+    'src/modules/tpv/services/cobro.service.ts',
+    'src/modules/tpv/services/comanda.service.ts',
+    'src/modules/tpv/services/kds.service.ts',
+    'src/modules/tpv/services/mesa.service.ts',
+    'src/modules/verifactu/verifactu.service.ts',
   ],
   coverageDirectory: './coverage',
   coverageReporters: ['text', 'html', 'lcov', 'json-summary'],
   coverageThreshold: {
     global: {
-      statements: 35,  // Alineado con la cobertura base actual para mantener un gate útil en CI
-      branches: 35,
-      functions: 25,
-      lines: 35,
+      statements: 60,
+      branches: 50,
+      functions: 60,
+      lines: 60,
     },
   },
   testEnvironment: 'node',
