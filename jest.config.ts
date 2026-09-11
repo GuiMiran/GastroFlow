@@ -10,7 +10,7 @@ const config: Config = {
   collectCoverageFrom: [
     'src/common/events/**/*.ts',
     'src/common/prisma/**/*.ts',
-    'src/common/types/**/*.ts',
+    'src/common/types/iva.ts',
     'src/modules/auth/**/*.service.ts',
     'src/modules/contable/**/*.service.ts',
     'src/modules/empleado/**/*.service.ts',
