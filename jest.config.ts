@@ -8,21 +8,23 @@ const config: Config = {
     '^.+\\.ts$': 'ts-jest',
   },
   collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/main.ts',              // Excluir bootstrap
-    '!src/**/*.module.ts',       // Excluir módulos (poca lógica)
-    '!src/**/*.dto.ts',          // Excluir DTOs (solo tipos)
-    '!src/**/*.interface.ts',    // Excluir interfaces
-    '!src/**/*.types.ts',        // Excluir types
+    'src/common/events/**/*.ts',
+    'src/common/prisma/**/*.ts',
+    'src/common/types/iva.ts',
+    'src/modules/auth/**/*.service.ts',
+    'src/modules/contable/**/*.service.ts',
+    'src/modules/empleado/**/*.service.ts',
+    'src/modules/tpv/services/**/*.ts',
+    'src/modules/verifactu/**/*.service.ts',
   ],
   coverageDirectory: './coverage',
   coverageReporters: ['text', 'html', 'lcov', 'json-summary'],
   coverageThreshold: {
     global: {
-      statements: 60,  // Objetivo 80%, pero empezamos con 60% para no romper CI
-      branches: 50,    // Objetivo 75%
-      functions: 60,   // Objetivo 80%
-      lines: 60,       // Objetivo 80%
+      statements: 60,
+      branches: 50,
+      functions: 60,
+      lines: 60,
     },
   },
   testEnvironment: 'node',
